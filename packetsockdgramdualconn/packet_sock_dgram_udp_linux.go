@@ -1,8 +1,9 @@
 // create:2021/02/20
 // update:2021/02/20
-package packetsockdgram
+package packetsockdgramdualconn
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
-	// "golang.org/x/net/internal/socket"
 )
 
 // ===================
@@ -26,13 +26,14 @@ import (
 
 //  package err definition
 var (
-	ErrNotDestPort     = errors.New("not match dest port")
-	ErrInvalidConn     = errors.New("invalid connection")
-	ErrMissingAddress  = errors.New("missing address")
-	ErrNilHeader       = errors.New("nil header")
-	ErrBufsizeTooShort = errors.New("buffer size too short")
-	ErrHeaderTooShort  = errors.New("header too short")
-	ErrPayloadLen      = errors.New("payload size not correct")
+	ErrSomethingIsWrong = errors.New("smoething is wrong")
+	ErrNotDestPort      = errors.New("not match dest port")
+	ErrInvalidConn      = errors.New("invalid connection")
+	ErrMissingAddress   = errors.New("missing address")
+	ErrNilHeader        = errors.New("nil header")
+	ErrBufsizeTooShort  = errors.New("buffer size too short")
+	ErrHeaderTooShort   = errors.New("header too short")
+	ErrPayloadLen       = errors.New("payload size not correct")
 )
 
 func htons(host uint16) uint16 {
@@ -91,13 +92,13 @@ func (c *handler) ok() bool { return c != nil }
 
 func (hdl *handler) readFrom(b []byte) (n int, h *IpHeader, uh *UdpHeader, p []byte, err error) {
 	if !hdl.ok() {
-		return -1, nil, nil, nil, ErrInvalidConn
+		return 0, nil, nil, nil, ErrInvalidConn
 	}
 
 	n, _, err = syscall.Recvfrom(hdl.fd, b, syscall.MSG_TRUNC)
 
 	if err != nil {
-		return -1, nil, nil, nil, err
+		return 0, nil, nil, nil, err
 	}
 
 	// recv data size check
@@ -110,7 +111,7 @@ func (hdl *handler) readFrom(b []byte) (n int, h *IpHeader, uh *UdpHeader, p []b
 	} else if b[0] == 0x60 {
 		return hdl.readFromIpv6(b)
 	}
-	return -1, nil, nil, nil, err
+	return 0, nil, nil, nil, ErrSomethingIsWrong
 }
 
 func (hdl *handler) readFromIpv4(b []byte) (n int, iph *IpHeader, uh *UdpHeader, p []byte, err error) {
@@ -177,9 +178,10 @@ const (
 )
 
 type DualConn struct {
+	ctx context.Context
 	// genericOpt
-	conn4 Conn
-	conn6 Conn
+	Conn4 Conn
+	Conn6 Conn
 }
 
 type Conn struct {
@@ -190,8 +192,8 @@ type Conn struct {
 
 //
 func (dc *DualConn) Close() {
-	dc.conn4.Close()
-	dc.conn6.Close()
+	dc.Conn4.Close()
+	dc.Conn6.Close()
 }
 
 //
@@ -203,14 +205,14 @@ func (c *Conn) Close() error {
 }
 
 //
-func NewDualConn(port int,
+func NewDualConn(ctx context.Context, port int,
 	bufsize int,
 	handler func(int, *IpHeader, *UdpHeader, []byte, error)) (*DualConn, error) {
-	return NewDualConnIf(port, "", bufsize, handler)
+	return NewDualConnIf(ctx, port, "", bufsize, handler)
 }
 
 //
-func NewDualConnIf(port int, ifname string,
+func NewDualConnIf(ctx context.Context, port int, ifname string,
 	bufsize int,
 	handler func(int, *IpHeader, *UdpHeader, []byte, error)) (*DualConn, error) {
 	ifindex := 0
@@ -233,23 +235,35 @@ func NewDualConnIf(port int, ifname string,
 	}
 
 	dcnn := &DualConn{}
-	dcnn.conn4 = *conn4
-	dcnn.conn6 = *conn6
-
-	goRoutineReadfrom(conn4, bufsize, handler)
-	goRoutineReadfrom(conn6, bufsize, handler)
+	dcnn.Conn4 = *conn4
+	dcnn.Conn6 = *conn6
+	dcnn.ctx = ctx
+	goRoutineReadfrom(ctx, conn4, bufsize, handler)
+	// wg4.Wait()
+	goRoutineReadfrom(ctx, conn6, bufsize, handler)
+	// wg6.Wait()
 
 	return dcnn, nil
 }
 
-func goRoutineReadfrom(cnn *Conn, bufsize int, handler func(int, *IpHeader, *UdpHeader, []byte, error)) {
+func goRoutineReadfrom(ctx context.Context, cnn *Conn, bufsize int, handler func(int, *IpHeader, *UdpHeader, []byte, error)) {
+
 	go func() {
+		go func() {
+			select {
+			case <-ctx.Done():
+				//fmt.Println("i am done")
+			}
+			cnn.Close()
+		}()
+
 		for {
 			b := make([]byte, bufsize)
 			n, iph, udph, payload, err := cnn.Readfrom(b)
 			handler(n, iph, udph, payload, err)
 		}
 	}()
+
 }
 
 //

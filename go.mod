@@ -1,4 +1,4 @@
-module github.com/ugonakawaka/PacketSockDgram
+module github.com/ugonakawaka/PacketSockDgramDualConn
 
 go 1.15
 
