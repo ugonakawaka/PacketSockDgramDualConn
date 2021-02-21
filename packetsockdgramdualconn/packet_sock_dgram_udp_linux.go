@@ -1,5 +1,5 @@
 // create:2021/02/20
-// update:2021/02/20
+// update:2021/02/21
 package packetsockdgramdualconn
 
 import (
@@ -26,14 +26,15 @@ import (
 
 //  package err definition
 var (
+	// このエラーはハンドラー実装ではじくようにしてください
 	ErrSomethingIsWrong = errors.New("smoething is wrong")
-	ErrNotDestPort      = errors.New("not match dest port")
-	ErrInvalidConn      = errors.New("invalid connection")
-	ErrMissingAddress   = errors.New("missing address")
-	ErrNilHeader        = errors.New("nil header")
-	ErrBufsizeTooShort  = errors.New("buffer size too short")
-	ErrHeaderTooShort   = errors.New("header too short")
-	ErrPayloadLen       = errors.New("payload size not correct")
+	// このエラーはハンドラー実装ではじくようにしてください
+	ErrNotDestPort     = errors.New("not match dest port")
+	ErrInvalidConn     = errors.New("invalid connection")
+	ErrNilHeader       = errors.New("nil header")
+	ErrBufsizeTooShort = errors.New("buffer size too short")
+	ErrHeaderTooShort  = errors.New("header too short")
+	ErrPayloadLen      = errors.New("payload size not correct")
 )
 
 func htons(host uint16) uint16 {
