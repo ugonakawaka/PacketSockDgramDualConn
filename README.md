@@ -43,4 +43,6 @@ AF_PACKETを使っており、udpの自分宛先のポートを自前でチェ�
 
 ## 参考  
 golangの標準のnetのListenPacketの仕様 
-'''For UDP and IP networks, if the host in the address parameter is empty or a literal unspecified IP address, ListenPacket listens on all available IP addresses of the local system except multicast IP addresses.'''
+[net - The Go Programming Language](https://golang.org/pkg/net/)  
+
+```For UDP and IP networks, if the host in the address parameter is empty or a literal unspecified IP address, ListenPacket listens on all available IP addresses of the local system except multicast IP addresses.```
