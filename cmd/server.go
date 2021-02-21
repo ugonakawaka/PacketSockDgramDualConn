@@ -29,23 +29,24 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// error disp level
-	errl := 0
-
 	// udp handler
 	handler := func(n int, iph *dualconn.IpHeader, udph *dualconn.UdpHeader, payload []byte, err error) {
 
 		if err != nil {
-			if errl == 1 {
-				fmt.Println(err)
-			}
-			if err != dualconn.ErrNotDestPort {
+
+			if err != dualconn.ErrNotDestPort && err != dualconn.ErrSomethingIsWrong {
 				fmt.Println(err)
 			}
 			return
 		}
 
-		fmt.Printf("size:[%d]\n", n)
+		// プロトコルバージョンのチェック
+		if iph.Ver == 4 {
+			fmt.Println("version:4")
+		} else if iph.Ver == 6 {
+			fmt.Println("version:6")
+		}
+
 		fmt.Printf("ip header:[%v]\n", iph)
 		fmt.Printf("udp header:[%v]\n", udph)
 		fmt.Printf("payload:[%v]\n", string(payload))
@@ -62,8 +63,7 @@ func main() {
 
 	fmt.Println("enter q    -> os.exit")
 	fmt.Println("enter c    -> cancel")
-	fmt.Println("enter 0 -> error no print")
-	fmt.Println("enter 1 -> error print ")
+
 	var a string
 
 	go func() {
@@ -77,14 +77,6 @@ func main() {
 			if a == "c" {
 				fmt.Println("cancel....")
 				cancel()
-				continue
-			}
-			if a == "0" {
-				errl = 0
-				continue
-			}
-			if a == "1" {
-				errl = 1
 				continue
 			}
 		}

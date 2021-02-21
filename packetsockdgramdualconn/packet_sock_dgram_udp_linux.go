@@ -46,8 +46,13 @@ func htons(host uint16) uint16 {
 const (
 	UDPHeaderLen = 8
 )
+const (
+	Ipv4 = 4
+	Ipv6 = 6
+)
 
 type IpHeader struct {
+	Ver        int
 	Ipv4Header *ipv4.Header
 	Ipv6Header *ipv6.Header
 }
@@ -123,7 +128,7 @@ func (hdl *handler) readFromIpv4(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 		return n, nil, nil, nil, err
 	}
 
-	iph = &IpHeader{Ipv4Header: ipv4h}
+	iph = &IpHeader{Ver: Ipv4, Ipv4Header: ipv4h}
 	endudp4h := ipv4.HeaderLen + UDPHeaderLen
 
 	// udp header
@@ -150,7 +155,7 @@ func (hdl *handler) readFromIpv6(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 		return n, nil, nil, nil, err
 	}
 
-	iph = &IpHeader{Ipv6Header: ipv6h}
+	iph = &IpHeader{Ver: Ipv6, Ipv6Header: ipv6h}
 
 	startudp6h := ipv6.HeaderLen
 	endudp6h := startudp6h + UDPHeaderLen
@@ -172,11 +177,6 @@ func (hdl *handler) readFromIpv6(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 
 // ===================
 // endpoint
-
-const (
-	Ipv4 = 4
-	Ipv6 = 6
-)
 
 type DualConn struct {
 	ctx context.Context
