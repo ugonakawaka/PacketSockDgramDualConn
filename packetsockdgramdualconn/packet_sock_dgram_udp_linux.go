@@ -179,14 +179,11 @@ func (hdl *handler) readFromIpv6(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 // endpoint
 
 type DualConn struct {
-	ctx context.Context
-	// genericOpt
 	Conn4 Conn
 	Conn6 Conn
 }
 
 type Conn struct {
-	// genericOpt
 	fd int
 	handler
 }
@@ -238,11 +235,9 @@ func NewDualConnIf(ctx context.Context, port int, ifname string,
 	dcnn := &DualConn{}
 	dcnn.Conn4 = *conn4
 	dcnn.Conn6 = *conn6
-	dcnn.ctx = ctx
+
 	goRoutineReadfrom(ctx, conn4, bufsize, handler)
-	// wg4.Wait()
 	goRoutineReadfrom(ctx, conn6, bufsize, handler)
-	// wg6.Wait()
 
 	return dcnn, nil
 }
