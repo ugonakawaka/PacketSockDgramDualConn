@@ -4,8 +4,13 @@
 
 linux上でudpのconnを提供します。 
 udpを通常扱う場合は、ipヘッダーは気にしないと思いますが、このconnではipヘッダーを取り扱います。  
+あとipv4/ipv6デュアルスタックをシンプルに実現するために用意しました。  
 実現方法は、AF_PACKET、SOCK_DGRAM、ETH_P_IP、ETH_P_IPV6、を指定することで実現しています。
 ネットワークインターフェイスを指定せず、ipv4、ipv6の両方からのudpをひとつのconnで受け取れるように実装しています。  
+
+golangの標準のnetのListenPacketの仕様 
+'''For UDP and IP networks, if the host in the address parameter is empty or a literal unspecified IP address, ListenPacket listens on all available IP addresses of the local system except multicast IP addresses.'''
+
 
 ## ちなみに
 AF_PACKET、SOCK_DGRAM、ETH_P_ALLの指定だけでひとつのソケットで、対応できることはわかったのですが、udpをふたつ受けとってしまうため、このような実装にしました。  
@@ -34,3 +39,7 @@ cmd/server.go の実装をみるとわかると思います。処理をブロッ
 ## 実装について  
 １ソースファイルで実装するように心がけました。おおよそ３つのパートに分かれています。外部向け(export function/method)は、ソースコードの下のほうにしました。
 
+
+## 参考  
+golangの標準のnetのListenPacketの仕様 
+'''For UDP and IP networks, if the host in the address parameter is empty or a literal unspecified IP address, ListenPacket listens on all available IP addresses of the local system except multicast IP addresses.'''
