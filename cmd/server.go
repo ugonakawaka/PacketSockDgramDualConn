@@ -18,8 +18,8 @@ var (
 	Port = flag.Int("port", 55501, "message receive port")
 	// Dev target device
 	Dev = flag.String("if", "lo", "interface")
-	// Bufsize sss
-	Bufsize = flag.Int("buf sieze", 1500, "recv buffer size")
+	// Bufsize buffer size
+	Bufsize = flag.Int("bsize", 1500, "recv buffer size")
 	b       = flag.Bool("b", false, "payload trim right side LF")
 )
 
@@ -49,7 +49,7 @@ func main() {
 
 		fmt.Printf("ip header:[%v]\n", iph)
 		fmt.Printf("udp header:[%v]\n", udph)
-		fmt.Printf("payload:[%v]\n", string(payload))
+		fmt.Printf("payload size:[%v] body:[%v]\n", len(payload), string(payload))
 		// fmt.Printf("%s\n", hex.Dump(b[:n]))
 		fmt.Println("")
 	}

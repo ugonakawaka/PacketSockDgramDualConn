@@ -129,21 +129,23 @@ func (hdl *handler) readFromIpv4(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 	}
 
 	iph = &IpHeader{Ver: Ipv4, Ipv4Header: ipv4h}
-	endudp4h := ipv4.HeaderLen + UDPHeaderLen
+	endudph := ipv4.HeaderLen + UDPHeaderLen
 
 	// udp header
-	uh, err = ParseUDPHeader(b[ipv4.HeaderLen:endudp4h])
+	uh, err = ParseUDPHeader(b[ipv4.HeaderLen:endudph])
 
 	if err != nil {
 		return n, iph, nil, nil, err
 	}
 
-	pb := b[endudp4h:]
-
 	// port check
 	if hdl.rcvport != uh.DestinationPort {
-		return n, iph, uh, pb, ErrNotDestPort
+		return n, iph, uh, nil, ErrNotDestPort
 	}
+
+	// payload
+	pend := endudph + (uh.Length - UDPHeaderLen)
+	pb := b[endudph:pend]
 
 	return n, iph, uh, pb, nil
 }
@@ -158,7 +160,7 @@ func (hdl *handler) readFromIpv6(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 	iph = &IpHeader{Ver: Ipv6, Ipv6Header: ipv6h}
 
 	startudp6h := ipv6.HeaderLen
-	endudp6h := startudp6h + UDPHeaderLen
+	endudph := startudp6h + UDPHeaderLen
 
 	// udp header
 	uh, err = ParseUDPHeader(b[startudp6h:])
@@ -166,11 +168,14 @@ func (hdl *handler) readFromIpv6(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 		return n, iph, nil, nil, err
 	}
 
-	pb := b[endudp6h:]
 	// port check
 	if hdl.rcvport != uh.DestinationPort {
-		return n, iph, uh, pb, ErrNotDestPort
+		return n, iph, uh, nil, ErrNotDestPort
 	}
+
+	// payload
+	pend := endudph + (uh.Length - UDPHeaderLen)
+	pb := b[endudph:pend]
 
 	return n, iph, uh, pb, nil
 }
