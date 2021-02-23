@@ -1,5 +1,5 @@
 // create:2021/02/20
-// update:2021/02/21
+// update:2021/02/23
 package packetsockdgramdualconn
 
 import (
@@ -183,14 +183,14 @@ func (hdl *handler) readFromIpv6(b []byte) (n int, iph *IpHeader, uh *UdpHeader,
 // ===================
 // endpoint
 
-type DualConn struct {
-	Conn4 Conn
-	Conn6 Conn
-}
-
 type Conn struct {
 	fd int
 	handler
+}
+
+type DualConn struct {
+	Conn4 Conn
+	Conn6 Conn
 }
 
 //
@@ -272,9 +272,9 @@ func NewConn(protco int, port int, ifindex int32) (*Conn, error) {
 	ethP := func(p int) int {
 
 		switch p {
-		case Ipv4: //
+		case Ipv4:
 			return syscall.ETH_P_IP
-		case Ipv6: //
+		case Ipv6:
 			return syscall.ETH_P_IPV6
 		default:
 			return syscall.ETH_P_ALL
